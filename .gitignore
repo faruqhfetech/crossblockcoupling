@@ -1,0 +1,12 @@
+.env
+results/
+__pycache__/
+*.pyc
+*.log
+stubs_faruq/
+stubs_kadima/
+stubs_almond/
+stubs_mohamed/
+playground/
+
+*.sh

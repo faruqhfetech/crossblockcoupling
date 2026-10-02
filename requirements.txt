@@ -1,0 +1,11 @@
+# Python 3.10+. Muon needs torch>=2.9 (torch.optim.Muon); developed on torch 2.13.
+torch>=2.9
+torchvision>=0.20
+numpy>=1.26
+pandas>=2.1
+pyarrow>=15            # get_data.py (parquet)
+scipy>=1.11
+matplotlib>=3.8       # analysis/figures.py
+statsmodels>=0.14      # analysis/momentum.py (clustered regressions)
+sentencepiece>=0.2.0   # experiments/lm_data.py only
+pytest                 # tests/
