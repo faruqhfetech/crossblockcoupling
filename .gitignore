@@ -16,3 +16,5 @@ playground/
 .idea/
 .DS_Store
 Thumbs.db
+
+analysis/compare_outputs.py
