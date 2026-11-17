@@ -128,7 +128,7 @@ def main():
     p.add_argument("--lr", type=float, default=0.01)
     p.add_argument("--momentum", type=float, default=0.0)
     p.add_argument("--epochs", type=int, default=30)
-    p.add_argument("--checkpoint-every", type=int, default=5)
+    p.add_argument("--checkpoint-every", type=int, default=1)
     p.add_argument("--interventions", nargs="+", default=["uniform", "lower_hot", "upper_hot", "lower_only",
                                                            "upper_only", "both_hot", "both_cold"])
     p.add_argument("--custom", nargs="*", default=[], help="NAME:S_A:S_B")

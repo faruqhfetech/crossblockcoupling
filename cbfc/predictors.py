@@ -15,9 +15,11 @@ def linear_cka(X, Y):
     Y = Y.flatten(1)
     X = X - X.mean(0)
     Y = Y - Y.mean(0)
-    cross = (X.T @ Y).pow(2).sum()
-    norm_x = (X.T @ X).pow(2).sum().sqrt()
-    norm_y = (Y.T @ Y).pow(2).sum().sqrt()
+    gram_x = X @ X.T
+    gram_y = Y @ Y.T
+    cross = (gram_x * gram_y).sum()
+    norm_x = gram_x.pow(2).sum().sqrt()
+    norm_y = gram_y.pow(2).sum().sqrt()
     denominator = (norm_x * norm_y).clamp_min(1e-20)
     return (cross / denominator).item()
 

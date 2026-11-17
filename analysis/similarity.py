@@ -1,4 +1,5 @@
-"""Similarity / norm baselines vs coupling, persistence controls, H/D/I composition, exact vs diagonal Fisher.
+"""Similarity / norm baselines vs coupling, persistence controls, head-to-head tests, H/D/I composition,
+exact vs diagonal Fisher.
 
   python -m analysis.similarity --runs results/sim_cifar10 --out results/report_sim [--probe train]
 """
@@ -19,20 +20,51 @@ CTRL_SETS = [("pos", ["progress"]), ("pos+step", ["progress", "a_dot_norm"]),
              ("all", ["progress", "a_dot_norm", "probe_dloss_a", "prev_dloss", "overfit_gap"])]
 
 
-def within(df, x, y, controls):
-    """Per condition: summary of within-network partial rho(x, y | controls)."""
+def network_rhos(df, x, y, controls):
+    """One partial rho(x, y | controls) per network: computed per block split, then averaged."""
     rows = []
-    for (condition, _), g in df.groupby(["condition", "network"]):
-        g = g.sort_values("epoch")
+    for (condition, network), g in df.groupby(["condition", "network"]):
         if x not in g or y not in g or g[x].isna().all():
             continue
-        rho = partial_rank_corr(g[x], g[y], g[controls].to_numpy())
-        rows.append(dict(condition=condition, rho=rho))
-    per_network = pd.DataFrame(rows, columns=["condition", "rho"])
+        if any(c not in g or g[c].isna().all() for c in controls):
+            continue
+        split_rhos = []
+        for _, series in g.groupby("split"):
+            series = series.sort_values("epoch")
+            split_rhos.append(partial_rank_corr(series[x], series[y], series[controls].to_numpy()))
+        rows.append(dict(condition=condition, network=network, rho=np.nanmean(split_rhos)))
+    return pd.DataFrame(rows, columns=["condition", "network", "rho"])
+
+
+def within(df, x, y, controls):
+    """Per condition: summary of within-network partial rho(x, y | controls)."""
+    per_network = network_rhos(df, x, y, controls)
     out = []
     for condition, g in per_network.groupby("condition"):
         out.append(dict(condition=condition, x=x, y=y, controls="+".join(controls), **one_sample(g.rho)))
     return out
+
+
+def head_to_head(df, baselines, base_controls=("progress",), outcome="next_dloss"):
+    """Does coupling predict the outcome beyond each baseline, and each baseline beyond coupling?
+    Per condition and baseline: the baseline alone, coupling with the baseline added as a control,
+    and the baseline with coupling added as a control (negative rho = predicts improvement)."""
+    base_controls = list(base_controls)
+    tests = {"alone": lambda b: (b, base_controls),
+             "coupling_given_baseline": lambda b: ("coupling", base_controls + [b]),
+             "baseline_given_coupling": lambda b: (b, base_controls + ["coupling"])}
+    rows = []
+    for baseline in baselines:
+        for test, make in tests.items():
+            x, controls = make(baseline)
+            for result in within(df, x, outcome, controls):
+                rows.append(dict(baseline=baseline, test=test, condition=result["condition"], n=result["n"],
+                                 mean=result["mean"], frac_negative=result["frac_negative"],
+                                 p_wilcoxon=result["p_wilcoxon"]))
+    for result in within(df, "coupling", outcome, base_controls):
+        rows.append(dict(baseline="(none)", test="coupling_alone", condition=result["condition"], n=result["n"],
+                         mean=result["mean"], frac_negative=result["frac_negative"], p_wilcoxon=result["p_wilcoxon"]))
+    return pd.DataFrame(rows)
 
 
 def use_probe(df, probe):
@@ -94,6 +126,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     df = use_probe(L.load(*a.runs), a.probe)
+    df["condition"] = df.dataset + " | " + df.condition
     fab_norm = np.sqrt(df.emp_Fab_frob_sq.clip(lower=0))
     df["Fab_norm"] = fab_norm / np.sqrt(df.emp_trace_a * df.emp_trace_b)
     for k in BASELINES:
@@ -135,6 +168,15 @@ def main():
         table = persistence.pivot_table(index="x", columns=["condition", "control_set"], values="mean")
         lines += ["3. NEXT-INTERVAL LOSS PREDICTION under persistence controls (negative = improvement)",
                   table.round(3).to_string(), ""]
+
+    contenders = present + ["emp_trace_b"]
+    duel = head_to_head(df, contenders)
+    duel.to_csv(out / "6_head_to_head.csv", index=False)
+    duel_table = duel.pivot_table(index=["baseline", "test"], columns="condition", values="mean")
+    lines += ["6. HEAD TO HEAD, position-controlled (negative = predicts improvement). coupling_given_baseline:",
+              "   does coupling predict beyond the baseline? baseline_given_coupling: the reverse.",
+              "   emp_trace_b is the level of the upper Fisher trace; coupling is its lower-induced change.",
+              duel_table.round(3).to_string(), ""]
 
     if "H_a" in df:
         decomposition = decomposition_table(df)

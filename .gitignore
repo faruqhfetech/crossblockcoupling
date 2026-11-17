@@ -8,5 +8,11 @@ stubs_kadima/
 stubs_almond/
 stubs_mohamed/
 playground/
-
 *.sh
+.cache/
+.pytest_cache/
+*.pt
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

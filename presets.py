@@ -89,7 +89,7 @@ def cnn_fisher_check():
 def vit_cifar100():
     return grid(seeds=range(5), depths=(12,), dataset="cifar100", arch="vit", width=192, heads=3,
                 optimizer="adamw", lr=3e-4, weight_decay=0.05, augment=True, epochs=100,
-                checkpoint_every=5, model_fisher="none", splits=SPLITS, tag="vit")
+                checkpoint_every=1, model_fisher="none", splits=SPLITS, tag="vit")
 
 
 def smoke():

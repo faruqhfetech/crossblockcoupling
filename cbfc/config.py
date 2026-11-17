@@ -50,7 +50,7 @@ class RunConfig:
     lr_final: float | None = None
     epochs: int = 30
     batch_size: int = 128
-    checkpoint_every: int = 2
+    checkpoint_every: int = 1
     probe_source: str = "val"
     probe_size: int = 200
     probe_seed: int = 12345

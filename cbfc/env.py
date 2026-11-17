@@ -1,4 +1,4 @@
-"""Settings from dlmidterm/.env; shell environment variables take precedence."""
+"""Settings from the project .env; shell environment variables take precedence."""
 import os
 from pathlib import Path
 

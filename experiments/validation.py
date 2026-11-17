@@ -236,7 +236,7 @@ def main():
     p.add_argument("--lr", type=float, default=0.01)
     p.add_argument("--momentum", type=float, default=0.0)
     p.add_argument("--epochs", type=int, default=30)
-    p.add_argument("--checkpoint-every", type=int, default=5)
+    p.add_argument("--checkpoint-every", type=int, default=1)
     p.add_argument("--alphas", nargs="+", type=float, default=[-1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 2])
     p.add_argument("--directions", nargs="+", default=["actual", "opposite", "random", "permuted", "other_batch", "random_labels"])
     p.add_argument("--random-directions", type=int, default=3)
